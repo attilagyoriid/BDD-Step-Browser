@@ -1,0 +1,20 @@
+{
+  "name": "bdd-step-browser",
+  "version": "1.0.0",
+  "description": "App to browse gherkin (bdd) features, scenarios nad steps",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "bdd",
+    "gherkin",
+    "cucumber",
+    "test"
+  ],
+  "author": "Attila Gyori",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^17.1.0"
+  }
+}
