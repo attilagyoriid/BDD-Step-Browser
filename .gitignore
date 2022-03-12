@@ -53,3 +53,4 @@ ehthumbs.db
 # Windows shortcuts #
 #####################
 *.lnk
+config/db.js

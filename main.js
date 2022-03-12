@@ -1,23 +1,26 @@
-const path = require('path')
-const url = require('url')
+/** @format */
+
+const path = require("path");
+const url = require("url");
 const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
-const Log = require('./models/Log')
-const connectDB = require('./config/db');
-const getAllFilesByExtension = require('./src/service/getAllFilesByExtension');
+const Log = require("./models/Log");
+const connectDB = require("./config/db");
+const getAllFilesByExtension = require("./src/service/getAllFilesByExtension");
+const gherkinParser = require("gherkin-parse");
 
 // Connect to database
-connectDB()
+connectDB();
 
-let mainWindow
+let mainWindow;
 
-let isDev = false
-const isMac = process.platform === 'darwin' ? true : false
+let isDev = false;
+const isMac = process.platform === "darwin" ? true : false;
 
 if (
   process.env.NODE_ENV !== undefined &&
-  process.env.NODE_ENV === 'development'
+  process.env.NODE_ENV === "development"
 ) {
-  isDev = true
+  isDev = true;
 }
 
 function createMainWindow() {
@@ -25,73 +28,72 @@ function createMainWindow() {
     width: isDev ? 1400 : 1100,
     height: 800,
     show: false,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     icon: `${__dirname}/assets/icons/icon.png`,
     webPreferences: {
       nodeIntegration: true,
     },
-  })
+  });
 
-  let indexPath
+  let indexPath;
 
-  if (isDev && process.argv.indexOf('--noDevServer') === -1) {
+  if (isDev && process.argv.indexOf("--noDevServer") === -1) {
     indexPath = url.format({
-      protocol: 'http:',
-      host: 'localhost:8080',
-      pathname: 'index.html',
+      protocol: "http:",
+      host: "localhost:8080",
+      pathname: "index.html",
       slashes: true,
-    })
+    });
   } else {
     indexPath = url.format({
-      protocol: 'file:',
-      pathname: path.join(__dirname, 'dist', 'index.html'),
+      protocol: "file:",
+      pathname: path.join(__dirname, "dist", "index.html"),
       slashes: true,
-    })
+    });
   }
 
-  mainWindow.loadURL(indexPath)
+  mainWindow.loadURL(indexPath);
 
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.show();
 
     // Open devtools if dev
     if (isDev) {
       const {
         default: installExtension,
         REACT_DEVELOPER_TOOLS,
-      } = require('electron-devtools-installer')
+      } = require("electron-devtools-installer");
 
       installExtension(REACT_DEVELOPER_TOOLS).catch((err) =>
-        console.log('Error loading React DevTools: ', err)
-      )
-      mainWindow.webContents.openDevTools()
+        console.log("Error loading React DevTools: ", err)
+      );
+      mainWindow.webContents.openDevTools();
     }
-  })
+  });
 
-  mainWindow.on('closed', () => (mainWindow = null))
+  mainWindow.on("closed", () => (mainWindow = null));
 }
 
-app.on('ready', () => {
-  createMainWindow()
+app.on("ready", () => {
+  createMainWindow();
 
-  const mainMenu = Menu.buildFromTemplate(menu)
-  Menu.setApplicationMenu(mainMenu)
-})
+  const mainMenu = Menu.buildFromTemplate(menu);
+  Menu.setApplicationMenu(mainMenu);
+});
 
 const menu = [
-  ...(isMac ? [{ role: 'appMenu' }] : []),
+  ...(isMac ? [{ role: "appMenu" }] : []),
   {
-    role: 'fileMenu',
+    role: "fileMenu",
   },
   {
-    role: 'editMenu',
+    role: "editMenu",
   },
   {
-    label: 'Logs',
+    label: "Logs",
     submenu: [
       {
-        label: 'Clear Logs',
+        label: "Clear Logs",
         click: () => clearLogs(),
       },
     ],
@@ -99,22 +101,25 @@ const menu = [
   ...(isDev
     ? [
         {
-          label: 'Developer',
+          label: "Developer",
           submenu: [
-            { role: 'reload' },
-            { role: 'forcereload' },
-            { type: 'separator' },
-            { role: 'toggledevtools' },
+            { role: "reload" },
+            { role: "forcereload" },
+            { type: "separator" },
+            { role: "toggledevtools" },
           ],
         },
       ]
     : []),
-]
+];
 
 // Load logs
-ipcMain.on('logs:load', sendLogs)
+ipcMain.on("logs:load", sendLogs);
 
-ipcMain.on("files:get",(e, rootPath) => {getFiles(rootPath, 'feature');})
+ipcMain.on("files:get", (e, rootPath) => {
+  let files = getFiles(rootPath, "feature");
+  getFeatureModel(files);
+});
 
 ipcMain.on("openDir", async (event, path) => {
   const options = {
@@ -143,68 +148,71 @@ ipcMain.on("openDir", async (event, path) => {
     "directory:set",
     JSON.stringify(result.filePaths[0])
   );
-
-});  
+});
 
 // Create log
-ipcMain.on('logs:add', async (e, item) => {
+ipcMain.on("logs:add", async (e, item) => {
   try {
-    await Log.create(item)
-    sendLogs()
+    await Log.create(item);
+    sendLogs();
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
-})
+});
 
 // Delete log
-ipcMain.on('logs:delete', async (e, id) => {
+ipcMain.on("logs:delete", async (e, id) => {
   try {
-    await Log.findOneAndDelete({ _id: id })
-    sendLogs()
+    await Log.findOneAndDelete({ _id: id });
+    sendLogs();
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
-})
-
+});
 
 function getFiles(rootPath, extension) {
-  console.log(`root path: ${rootPath}`)
+  console.log(`root path: ${rootPath}`);
   let files = getAllFilesByExtension(rootPath, extension);
   console.log(`Files found with extension ${extension}: ${files}`);
+  return files;
 }
 
+function getFeatureModel(files) {
+  const featureModelJSON = gherkinParser.convertFeatureFileToJSON(files[0]);
+  console.log(`Feature ${JSON.stringify(featureModelJSON)}`);
+}
 
 // Send log items
 async function sendLogs() {
   try {
-    const logs = await Log.find().sort({ created: 1 })
-    mainWindow.webContents.send('logs:get', JSON.stringify(logs))
+    const logs = await Log.find().sort({ created: 1 });
+    mainWindow.webContents.send("logs:get", JSON.stringify(logs));
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
 }
 
 // Clear all logs
 async function clearLogs() {
   try {
-    await Log.deleteMany({})
-    mainWindow.webContents.send('logs:clear')
+    await Log.deleteMany({});
+    mainWindow.webContents.send("logs:clear");
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
 }
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
 
-app.on('activate', () => {
+app.on("activate", () => {
   if (mainWindow === null) {
-    createMainWindow()
+    createMainWindow();
   }
-})
+});
 
 // Stop error
-app.allowRendererProcessReuse = true
+app.allowRendererProcessReuse = true;

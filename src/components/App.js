@@ -8,92 +8,88 @@ import { ipcRenderer, ipcMain } from 'electron'
 import Button from 'react-bootstrap/Button'
 import { Col, Form, Row } from 'react-bootstrap'
 import useLocalStorage from '../service/useLocalStorage'
-import { Files } from '../config/consts'
+import { Files, View } from "../config/consts";
 
 const App = () => {
-  const [logs, setLogs] = useState([])
+  const [logs, setLogs] = useState([]);
+  const [displayType, setDisplayType] = useState();
   const [alert, setAlert] = useState({
     show: false,
-    message: '',
-    variant: 'success',
-  })
+    message: "",
+    variant: "success",
+  });
 
   const [storedDirectoryToScan, setStoredDirectoryToScan] = useLocalStorage(
     "BDDStepBrowser",
     Files.DefaultPathToScan
   );
 
- 
-
   useEffect(() => {
-    ipcRenderer.send('logs:load')
+    ipcRenderer.send("logs:load");
 
+    ipcRenderer.on("logs:get", (e, logs) => {
+      setLogs(JSON.parse(logs));
+    });
 
-
-    ipcRenderer.on('logs:get', (e, logs) => {
-      setLogs(JSON.parse(logs))
-    })
-
-    ipcRenderer.on('logs:clear', () => {
-      setLogs([])
-      showAlert('Logs Cleared')
-    })
-    ipcRenderer.on('directory:set', (e, directory) => {
+    ipcRenderer.on("logs:clear", () => {
+      setLogs([]);
+      showAlert("Logs Cleared");
+    });
+    ipcRenderer.on("directory:set", (e, directory) => {
       console.log(`selected diiir ${directory}`);
       setStoredDirectoryToScan(JSON.parse(directory));
     });
-  }, [])
+  }, []);
 
-    useEffect(() => {
-      if (
-        storedDirectoryToScan && Files.DefaultPathToScan !== storedDirectoryToScan
-      ) {
-        console.log(`getting root dir: ${storedDirectoryToScan}`);
-        ipcRenderer.send("files:get", storedDirectoryToScan);
-      }
-        
-    }, [storedDirectoryToScan]);
+  useEffect(() => {
+    if (
+      storedDirectoryToScan &&
+      Files.DefaultPathToScan !== storedDirectoryToScan
+    ) {
+      console.log(`getting root dir: ${storedDirectoryToScan}`);
+      ipcRenderer.send("files:get", storedDirectoryToScan);
+    }
+  }, [storedDirectoryToScan]);
 
   function addItem(item) {
-    if (item.text === '' || item.user === '' || item.priority === '') {
-      showAlert('Please enter all fields', 'danger')
-      return false
+    if (item.text === "" || item.user === "" || item.priority === "") {
+      showAlert("Please enter all fields", "danger");
+      return false;
     }
 
     // item._id = Math.floor(Math.random() * 90000) + 10000
     // item.created = new Date().toString()
     // setLogs([...logs, item])
 
-    ipcRenderer.send('logs:add', item)
+    ipcRenderer.send("logs:add", item);
 
-    showAlert('Log Added')
+    showAlert("Log Added");
   }
 
   function deleteItem(_id) {
     // setLogs(logs.filter((item) => item._id !== _id))
-    ipcRenderer.send('logs:delete', _id)
-    showAlert('Log Removed')
+    ipcRenderer.send("logs:delete", _id);
+    showAlert("Log Removed");
   }
 
-  function showAlert(message, variant = 'success', seconds = 3000) {
+  function showAlert(message, variant = "success", seconds = 3000) {
     setAlert({
       show: true,
       message,
       variant,
-    })
+    });
 
     setTimeout(() => {
       setAlert({
         show: false,
-        message: '',
-        variant: 'success',
-      })
-    }, seconds)
+        message: "",
+        variant: "success",
+      });
+    }, seconds);
   }
 
   function handleOpenDirDialog() {
-      ipcRenderer.send("openDir"); 
-
+    ipcRenderer.send("openDir");
   }
 
   return (
@@ -116,6 +112,25 @@ const App = () => {
           />
         </Col>
       </Row>
+      <Row>
+        <Col xs={3}>
+          <Form.Group controlId='formBasicSelect'>
+            <Form.Label>Select View</Form.Label>
+            <Form.Control
+              as='select'
+              value={displayType}
+              onChange={(e) => {
+                console.log("e.target.value", e.target.value);
+                setDisplayType(e.target.value);
+              }}
+            >
+              <option value={View.Feature}>{View.Feature}</option>
+              <option value={View.Scenario}>{View.Scenario}</option>
+              <option value={View.Step}>{View.Step}</option>
+            </Form.Control>
+          </Form.Group>
+        </Col>
+      </Row>
 
       <Table>
         <thead>
@@ -135,6 +150,6 @@ const App = () => {
       </Table>
     </Container>
   );
-}
+};
 
 export default App
