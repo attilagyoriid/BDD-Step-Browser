@@ -1,18 +1,29 @@
-import React, { useState, useEffect } from 'react'
-import Container from 'react-bootstrap/Container'
-import Table from 'react-bootstrap/Table'
-import Alert from 'react-bootstrap/Alert'
-import LogItem from './LogItem'
-import AddLogItem from './AddLogItem'
-import { ipcRenderer, ipcMain } from 'electron'
-import Button from 'react-bootstrap/Button'
-import { Col, Form, Row } from 'react-bootstrap'
-import useLocalStorage from '../service/useLocalStorage'
+/** @format */
+
+import React, { useState, useEffect, useMemo } from "react";
+
+import Container from "react-bootstrap/Container";
+import Table from "react-bootstrap/Table";
+import Alert from "react-bootstrap/Alert";
+import LogItem from "./LogItem";
+import ReactTable from "./ReactTable";
+import AddLogItem from "./AddLogItem";
+import { ipcRenderer, ipcMain } from "electron";
+import Button from "react-bootstrap/Button";
+import { Col, Form, Row } from "react-bootstrap";
+import useLocalStorage from "../service/useLocalStorage";
 import { Files, View } from "../config/consts";
+import { matchSorter } from "match-sorter";
+import makeData from "../service/dataGenerator";
+import Select from "react-select";
 
 const App = () => {
   const [logs, setLogs] = useState([]);
   const [displayType, setDisplayType] = useState();
+
+  const [filtered, setFiltered] = useState([]);
+  const [select2, setSelect2] = useState();
+
   const [alert, setAlert] = useState({
     show: false,
     message: "",
@@ -23,6 +34,27 @@ const App = () => {
     "BDDStepBrowser",
     Files.DefaultPathToScan
   );
+
+  const onFilteredChangeCustom = (value, accessor) => {
+    let insertNewFilter = 1;
+    console.log("val ", value);
+    console.log("accessor ", accessor);
+    if (filtered.length) {
+      filtered.forEach((filter, i) => {
+        if (filter["id"] === accessor) {
+          if (value === "" || !value.length) filtered.splice(i, 1);
+          else filter["value"] = value;
+
+          insertNewFilter = 0;
+        }
+      });
+    }
+
+    if (insertNewFilter) {
+      filtered.push({ id: accessor, value: value });
+    }
+    setFiltered(filtered);
+  };
 
   useEffect(() => {
     ipcRenderer.send("logs:load");
@@ -92,6 +124,48 @@ const App = () => {
     ipcRenderer.send("openDir");
   }
 
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: "Name",
+        columns: [
+          {
+            Header: "First Name",
+            accessor: "firstName",
+          },
+          {
+            Header: "Last Name",
+            accessor: "lastName",
+          },
+        ],
+      },
+      {
+        Header: "Info",
+        columns: [
+          {
+            Header: "Age",
+            accessor: "age",
+          },
+          {
+            Header: "Visits",
+            accessor: "visits",
+          },
+          {
+            Header: "Status",
+            accessor: "status",
+          },
+          {
+            Header: "Profile Progress",
+            accessor: "progress",
+          },
+        ],
+      },
+    ],
+    []
+  );
+
+  const data = React.useMemo(() => makeData(20), []);
+
   return (
     <Container>
       <AddLogItem addItem={addItem} />
@@ -131,7 +205,7 @@ const App = () => {
           </Form.Group>
         </Col>
       </Row>
-
+      <ReactTable columns={columns} data={data} />
       <Table>
         <thead>
           <tr>
@@ -152,4 +226,4 @@ const App = () => {
   );
 };
 
-export default App
+export default App;

@@ -11,7 +11,7 @@ module.exports = {
         use: [{ loader: "style-loader" }, { loader: "css-loader" }],
       },
       {
-        test: /\.jsx?$/,
+        test: /\.(js|jsx)?$/,
         use: [{ loader: "babel-loader", query: { compact: false } }],
       },
       {
@@ -33,7 +33,7 @@ module.exports = {
       "process.env.NODE_ENV": JSON.stringify("development"),
     }),
   ],
-  devtool: "cheap-source-map",
+  devtool: "inline-source-maps",
   devServer: {
     contentBase: path.resolve(__dirname, "dist"),
     stats: {
