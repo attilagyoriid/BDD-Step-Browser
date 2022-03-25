@@ -6,7 +6,8 @@ const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
 const Log = require("./models/Log");
 const connectDB = require("./config/db");
 const getAllFilesByExtension = require("./src/service/getAllFilesByExtension");
-const gherkinParser = require("gherkin-parse");
+
+const featureParser = require("./src/service/featureParser");
 
 // Connect to database
 connectDB();
@@ -172,15 +173,14 @@ ipcMain.on("logs:delete", async (e, id) => {
 
 function getFiles(rootPath, extension) {
   console.log(`root path: ${rootPath}`);
-  let files = getAllFilesByExtension(rootPath, extension);
-  console.log(`Files found with extension ${extension}: ${files}`);
-  return files;
+  const featureList = getAllFilesByExtension(rootPath, extension).map((f) =>
+    featureParser(f)
+  );
+  console.log(`Files found with extension ${extension}: ${featureList}`);
+  return featureList;
 }
 
-function getFeatureModel(files) {
-  const featureModelJSON = gherkinParser.convertFeatureFileToJSON(files[0]);
-  console.log(`Feature ${JSON.stringify(featureModelJSON)}`);
-}
+function getFeatureModel(files) {}
 
 // Send log items
 async function sendLogs() {

@@ -13,7 +13,7 @@ import Button from "react-bootstrap/Button";
 import { Col, Form, Row } from "react-bootstrap";
 import useLocalStorage from "../service/useLocalStorage";
 import { Files, View } from "../config/consts";
-import { matchSorter } from "match-sorter";
+
 import makeData from "../service/dataGenerator";
 import Select from "react-select";
 
@@ -130,12 +130,13 @@ const App = () => {
         Header: "Name",
         columns: [
           {
-            Header: "First Name",
+            Header: "Feature Name",
             accessor: "firstName",
           },
           {
-            Header: "Last Name",
+            Header: "Feature Path",
             accessor: "lastName",
+            // filter: "fuzzyText",
           },
         ],
       },
@@ -143,11 +144,11 @@ const App = () => {
         Header: "Info",
         columns: [
           {
-            Header: "Age",
+            Header: "Number of Scenarios",
             accessor: "age",
           },
           {
-            Header: "Visits",
+            Header: "Tags",
             accessor: "visits",
           },
           {
@@ -165,6 +166,7 @@ const App = () => {
   );
 
   const data = React.useMemo(() => makeData(20), []);
+  console.log(`Data: ${JSON.stringify(data)}`);
 
   return (
     <Container>
