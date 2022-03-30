@@ -62,7 +62,9 @@ function DefaultColumnFilter({
     <input
       value={filterValue || ""}
       onChange={(e) => {
-        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+        setFilter(e.target.value || undefined);
+
+        // Set undefined to remove the filter entirely
       }}
       placeholder={`Search ${count} records...`}
     />
@@ -126,7 +128,7 @@ export default function ReactTable({ columns, data }) {
       data,
       defaultColumn, // Be sure to pass the defaultColumn option
       filterTypes,
-      initialState: { pageIndex: 1 },
+      initialState: { pageIndex: 0 },
     },
 
     useFilters, // useFilters!
@@ -148,8 +150,9 @@ export default function ReactTable({ columns, data }) {
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                <th>
                   <div
+                    {...column.getHeaderProps(column.getSortByToggleProps())}
                     className={
                       column.isSorted
                         ? column.isSortedDesc
@@ -158,7 +161,7 @@ export default function ReactTable({ columns, data }) {
                         : ""
                     }
                   >
-                    {column.render("Header")}
+                    <span>{column.render("Header")}</span>
                   </div>
 
                   {/* Render the columns filter UI */}

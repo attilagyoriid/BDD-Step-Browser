@@ -182,11 +182,21 @@ function getFiles(rootPath, extension) {
     );
     return featureTransformedDescriptor;
   });
-  console.log(`Files found with extension ${extension}: ${featureList}`);
-  return featureList;
+  const display = featureList.slice(2, 24);
+  const display2 = display.map((x) => x[0]);
+  console.log(
+    `Files found with extension transform ${extension}: ${JSON.stringify(
+      display2
+    )}`
+  );
+  return display2;
 }
 
-function getFeatureModel(files) {}
+function getFeatureModel(files) {
+  console.log(`sending feature files to renderer ${JSON.stringify(files)}`);
+  mainWindow.webContents.send("features:get", JSON.stringify(files));
+  console.log("getting features model");
+}
 
 // Send log items
 async function sendLogs() {
