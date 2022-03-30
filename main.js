@@ -8,6 +8,7 @@ const connectDB = require("./config/db");
 const getAllFilesByExtension = require("./src/service/getAllFilesByExtension");
 
 const featureParser = require("./src/service/featureParser");
+const featureDataTransformer = require("./src/service/featureDataTransformer");
 
 // Connect to database
 connectDB();
@@ -173,9 +174,14 @@ ipcMain.on("logs:delete", async (e, id) => {
 
 function getFiles(rootPath, extension) {
   console.log(`root path: ${rootPath}`);
-  const featureList = getAllFilesByExtension(rootPath, extension).map((f) =>
-    featureParser(f)
-  );
+  const featureList = getAllFilesByExtension(rootPath, extension).map((f) => {
+    const featureEntry = featureParser(f);
+    const featureTransformedDescriptor = featureDataTransformer(
+      featureEntry,
+      f
+    );
+    return featureTransformedDescriptor;
+  });
   console.log(`Files found with extension ${extension}: ${featureList}`);
   return featureList;
 }
