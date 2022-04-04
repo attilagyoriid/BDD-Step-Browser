@@ -1,7 +1,16 @@
+/** @format */
+
 .border--up-sort {
-   border-top: 6px solid rgb(235,194,80);
+  border-top: 6px solid rgb(235, 194, 80);
 }
 
 .border--down-sort {
-   border-bottom: 6px solid rgb(235,194,80);
+  border-bottom: 6px solid rgb(235, 194, 80);
+}
+
+.table-row:hover {
+  color: yellow;
+
+  background-color: blue;
+  cursor: pointer;
 }

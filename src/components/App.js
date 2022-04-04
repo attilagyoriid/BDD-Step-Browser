@@ -25,6 +25,8 @@ const App = () => {
    const [filtered, setFiltered] = useState([]);
    const [select2, setSelect2] = useState();
 
+   const [selectedRow, setSelectedRow] = useState([]);
+
    const [alert, setAlert] = useState({
      show: false,
      message: "",
@@ -155,6 +157,10 @@ const App = () => {
            {
              Header: "Tags",
              accessor: "tags",
+           },
+           {
+             Header: "Scenarios",
+             accessor: "scenarios",
            },
          ],
        },

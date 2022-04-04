@@ -13,6 +13,7 @@ import {
   useFilters,
   useGlobalFilter,
   useAsyncDebounce,
+  useRowSelect,
   usePagination,
   useSortBy,
 } from "react-table";
@@ -92,6 +93,24 @@ export default function ReactTable({ columns, data }) {
     []
   );
 
+  // const getTrProps = (state, rowInfo, instance) => {
+  //   if (rowInfo) {
+  //     return {
+  //       onClick: (e) => {
+  //         console.log(`Selected row: ${JSON.stringify(rowInfo)}`);
+  //         this.setState({
+  //           selected: rowInfo.index,
+  //         });
+  //       },
+  //       style: {
+  //         background: "blue",
+  //         color: "yellow",
+  //       },
+  //     };
+  //   }
+  //   return {};
+  // };
+
   const defaultColumn = React.useMemo(
     () => ({
       // Let's set up our default Filter UI
@@ -102,6 +121,7 @@ export default function ReactTable({ columns, data }) {
 
   const {
     getTableProps,
+    getTrProps,
     getTableBodyProps,
     headerGroups,
     rows,
@@ -120,15 +140,17 @@ export default function ReactTable({ columns, data }) {
     gotoPage,
     nextPage,
     previousPage,
+    selectedFlatRows,
     setPageSize,
-    state: { pageIndex, pageSize },
+    state: { pageIndex, pageSize, selectedRowIds },
   } = useTable(
     {
       columns,
       data,
       defaultColumn, // Be sure to pass the defaultColumn option
+      useRowSelect,
       filterTypes,
-      initialState: { pageIndex: 0 },
+      initialState: { pageIndex: 0, hiddenColumns: ["scenarios"] },
     },
 
     useFilters, // useFilters!
@@ -141,11 +163,30 @@ export default function ReactTable({ columns, data }) {
   // it for this use case
   const firstPageRows = rows.slice(0, 10);
 
+  const onRowClick = (state, rowInfo, column, instance) => {
+    return {
+      onClick: (e) => {
+        console.log("A Td Element was clicked!");
+        console.log("it produced this event:", e);
+        console.log("It was in this column:", column);
+        console.log("It was in this row:", rowInfo);
+        console.log("It was in this table instance:", instance);
+      },
+    };
+  };
+
   // Render the UI for your table
   return (
     <div>
       <div className='red'>hello </div>
-      <BTable striped bordered hover size='sm' {...getTableProps()}>
+      <BTable
+        striped
+        bordered
+        hover
+        size='sm'
+        {...getTableProps()}
+        getTrProps={onRowClick}
+      >
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -176,7 +217,36 @@ export default function ReactTable({ columns, data }) {
           {page.map((row, i) => {
             prepareRow(row);
             return (
-              <tr {...row.getRowProps()}>
+              <tr
+                className={"table-row"}
+                {...row.getRowProps()}
+                onDoubleClick={() => {
+                  const featureName = row.allCells[0].value;
+                  const featurePath = row.allCells[1].value;
+                  const scenarioNum = row.allCells[2].value;
+                  const tags = row.allCells[3].value;
+                  const scenarios = row.allCells[4].value;
+                  // row.allCells.forEach((cell) => {
+                  //   console.log(
+                  //     `on double click ${JSON.stringify(cell.value)}`
+                  //   );
+                  // });
+
+                  console.log(
+                    `on double click ${JSON.stringify({
+                      featureName,
+                      featurePath,
+                      scenarioNum,
+                      tags,
+                      scenarios,
+                    })}`
+                  );
+
+                  console.log(
+                    `on double click ${JSON.stringify(row.getRowProps)}`
+                  );
+                }}
+              >
                 {row.cells.map((cell) => {
                   return (
                     <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
