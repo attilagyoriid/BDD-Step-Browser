@@ -26,6 +26,8 @@ function GlobalFilter({
 }) {
   const count = preGlobalFilteredRows.length;
   const [value, setValue] = React.useState(globalFilter);
+  const [trPropsState, setTrPropsState] = React.useState(null);
+
   const onChange = useAsyncDebounce((value) => {
     setGlobalFilter(value || undefined);
   }, 200);
@@ -72,7 +74,8 @@ function DefaultColumnFilter({
   );
 }
 
-export default function ReactTable({ columns, data }) {
+export default function ReactTable({ columns, data, getTrProps }) {
+  const [isActive, setActive] = React.useState(null);
   const filterTypes = React.useMemo(
     () => ({
       // Add a new fuzzyTextFilterFn filter type.
@@ -92,6 +95,18 @@ export default function ReactTable({ columns, data }) {
     }),
     []
   );
+
+  // const getTrProps = (state, rowInfo, instance) => {
+  //   if (rowInfo) {
+  //     return {
+  //       style: {
+  //         background: rowInfo.row.age > 20 ? "red" : "green",
+  //         color: "white",
+  //       },
+  //     };
+  //   }
+  //   return {};
+  // };
 
   // const getTrProps = (state, rowInfo, instance) => {
   //   if (rowInfo) {
@@ -121,7 +136,6 @@ export default function ReactTable({ columns, data }) {
 
   const {
     getTableProps,
-    getTrProps,
     getTableBodyProps,
     headerGroups,
     rows,
@@ -140,7 +154,6 @@ export default function ReactTable({ columns, data }) {
     gotoPage,
     nextPage,
     previousPage,
-    selectedFlatRows,
     setPageSize,
     state: { pageIndex, pageSize, selectedRowIds },
   } = useTable(
@@ -148,6 +161,7 @@ export default function ReactTable({ columns, data }) {
       columns,
       data,
       defaultColumn, // Be sure to pass the defaultColumn option
+      getTrProps,
       useRowSelect,
       filterTypes,
       initialState: { pageIndex: 0, hiddenColumns: ["scenarios"] },
@@ -163,30 +177,11 @@ export default function ReactTable({ columns, data }) {
   // it for this use case
   const firstPageRows = rows.slice(0, 10);
 
-  const onRowClick = (state, rowInfo, column, instance) => {
-    return {
-      onClick: (e) => {
-        console.log("A Td Element was clicked!");
-        console.log("it produced this event:", e);
-        console.log("It was in this column:", column);
-        console.log("It was in this row:", rowInfo);
-        console.log("It was in this table instance:", instance);
-      },
-    };
-  };
-
   // Render the UI for your table
   return (
     <div>
       <div className='red'>hello </div>
-      <BTable
-        striped
-        bordered
-        hover
-        size='sm'
-        {...getTableProps()}
-        getTrProps={onRowClick}
-      >
+      <BTable striped bordered hover size='sm' {...getTableProps()}>
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -218,9 +213,19 @@ export default function ReactTable({ columns, data }) {
             prepareRow(row);
             return (
               <tr
-                className={"table-row"}
+                className={`table-row ${
+                  isActive === row.getRowProps().key ? "active" : ""
+                }`}
                 {...row.getRowProps()}
-                onDoubleClick={() => {
+                // onClick={() => getTrProps(row.original)}
+                // getTrProps={(trPropsState, rowInfo, column) => {
+                //   return {
+                //     style: {
+                //       background: "green",
+                //     },
+                //   };
+                // }}
+                onDoubleClick={(e) => {
                   const featureName = row.allCells[0].value;
                   const featurePath = row.allCells[1].value;
                   const scenarioNum = row.allCells[2].value;
@@ -231,10 +236,17 @@ export default function ReactTable({ columns, data }) {
                   //     `on double click ${JSON.stringify(cell.value)}`
                   //   );
                   // });
+                  // this.style = {
+                  //   padding: "10px",
+                  //   border: "solid 1px gray",
+                  //   background: "papayawhip",
+                  // };
+                  setActive(row.getRowProps().key);
 
                   console.log(
                     `on double click ${JSON.stringify({
                       featureName,
+                      rowProps: row.getRowProps(),
                       featurePath,
                       scenarioNum,
                       tags,
