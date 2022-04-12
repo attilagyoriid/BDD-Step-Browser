@@ -10,4 +10,6 @@ export const View = {
   Step: "Step",
 };
 
+export const CodeAsTextView = "text";
+
 
