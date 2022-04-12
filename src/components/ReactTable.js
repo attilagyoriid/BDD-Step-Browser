@@ -74,7 +74,7 @@ function DefaultColumnFilter({
   );
 }
 
-export default function ReactTable({ columns, data, getTrProps }) {
+export default function ReactTable({ columns, data, onHandleRowSelection }) {
   const [isActive, setActive] = React.useState(null);
   const filterTypes = React.useMemo(
     () => ({
@@ -96,36 +96,6 @@ export default function ReactTable({ columns, data, getTrProps }) {
     []
   );
 
-  // const getTrProps = (state, rowInfo, instance) => {
-  //   if (rowInfo) {
-  //     return {
-  //       style: {
-  //         background: rowInfo.row.age > 20 ? "red" : "green",
-  //         color: "white",
-  //       },
-  //     };
-  //   }
-  //   return {};
-  // };
-
-  // const getTrProps = (state, rowInfo, instance) => {
-  //   if (rowInfo) {
-  //     return {
-  //       onClick: (e) => {
-  //         console.log(`Selected row: ${JSON.stringify(rowInfo)}`);
-  //         this.setState({
-  //           selected: rowInfo.index,
-  //         });
-  //       },
-  //       style: {
-  //         background: "blue",
-  //         color: "yellow",
-  //       },
-  //     };
-  //   }
-  //   return {};
-  // };
-
   const defaultColumn = React.useMemo(
     () => ({
       // Let's set up our default Filter UI
@@ -143,10 +113,7 @@ export default function ReactTable({ columns, data, getTrProps }) {
     visibleColumns,
     preGlobalFilteredRows,
     setGlobalFilter,
-    page, // Instead of using 'rows', we'll use page,
-    // which has only the rows for the active page
-
-    // The rest of these things are super handy, too ;)
+    page,
     canPreviousPage,
     canNextPage,
     pageOptions,
@@ -160,15 +127,14 @@ export default function ReactTable({ columns, data, getTrProps }) {
     {
       columns,
       data,
-      defaultColumn, // Be sure to pass the defaultColumn option
-      getTrProps,
+      defaultColumn,
       useRowSelect,
       filterTypes,
       initialState: { pageIndex: 0, hiddenColumns: ["scenarios"] },
     },
 
-    useFilters, // useFilters!
-    useGlobalFilter, // useGlobalFilter!
+    useFilters,
+    useGlobalFilter,
     useSortBy,
     usePagination
   );
@@ -200,7 +166,6 @@ export default function ReactTable({ columns, data, getTrProps }) {
                     <span>{column.render("Header")}</span>
                   </div>
 
-                  {/* Render the columns filter UI */}
                   <div>{column.canFilter ? column.render("Filter") : null}</div>
                 </th>
               ))}
@@ -217,30 +182,40 @@ export default function ReactTable({ columns, data, getTrProps }) {
                   isActive === row.getRowProps().key ? "active" : ""
                 }`}
                 {...row.getRowProps()}
-                // onClick={() => getTrProps(row.original)}
-                // getTrProps={(trPropsState, rowInfo, column) => {
-                //   return {
-                //     style: {
-                //       background: "green",
-                //     },
-                //   };
-                // }}
+                onClick={(e) => {
+                  const featureName = row.allCells[0].value;
+                  const featurePath = row.allCells[1].value;
+                  const scenarioNum = row.allCells[2].value;
+                  const tags = row.allCells[3].value;
+                  const scenarios = row.allCells[4].value;
+
+                  setActive(row.getRowProps().key);
+
+                  const selectedRowObject = {
+                    featureName,
+                    rowProps: row.getRowProps(),
+                    featurePath,
+                    scenarioNum,
+                    tags,
+                    scenarios,
+                  };
+                  onHandleRowSelection(selectedRowObject);
+
+                  console.log(
+                    `on double click ${JSON.stringify(selectedRowObject)}`
+                  );
+
+                  console.log(
+                    `on double click ${JSON.stringify(row.getRowProps)}`
+                  );
+                }}
                 onDoubleClick={(e) => {
                   const featureName = row.allCells[0].value;
                   const featurePath = row.allCells[1].value;
                   const scenarioNum = row.allCells[2].value;
                   const tags = row.allCells[3].value;
                   const scenarios = row.allCells[4].value;
-                  // row.allCells.forEach((cell) => {
-                  //   console.log(
-                  //     `on double click ${JSON.stringify(cell.value)}`
-                  //   );
-                  // });
-                  // this.style = {
-                  //   padding: "10px",
-                  //   border: "solid 1px gray",
-                  //   background: "papayawhip",
-                  // };
+
                   setActive(row.getRowProps().key);
 
                   console.log(

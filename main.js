@@ -2,6 +2,7 @@
 
 const path = require("path");
 const url = require("url");
+const fs = require("fs");
 const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
 const Log = require("./models/Log");
 const connectDB = require("./config/db");
@@ -121,6 +122,24 @@ ipcMain.on("logs:load", sendLogs);
 ipcMain.on("files:get", (e, rootPath) => {
   let files = getFiles(rootPath, "feature");
   getFeatureModel(files);
+});
+
+ipcMain.on("feature:read", (e, featurePath) => {
+  console.log(`mi itt a bibi:${featurePath}`);
+  console.log(`mi itt a bibi1:${path.normalize(featurePath)}`);
+  console.log(`mi itt a bibi2:${path.resolve(featurePath)}`);
+
+  const mas = "D:\\work\\proba.txt";
+
+  const buffer = fs.readFileSync(JSON.parse(featurePath), {
+    encoding: "utf8",
+    flag: "r",
+  });
+  const featureContent = buffer.toString();
+  mainWindow.webContents.send(
+    "feature:content",
+    JSON.stringify(featureContent)
+  );
 });
 
 ipcMain.on("openDir", async (event, path) => {
